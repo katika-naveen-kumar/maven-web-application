@@ -1,0 +1,37 @@
+node
+{
+ def mavenHome = tool name: "maven3.6.3"
+ 
+ stage('check out code')
+ {
+  git branch: 'development', credentialsId: 'c95a92d0-db8d-408b-8871-f254cbd3bd19', url: 'https://github.com/chandudevOps261/maven-web-application.git'
+ }
+ stage('Build')
+ {
+  sh "${mavenHome}/bin/mvn clean package"
+ }
+ stage('ExcecuteSonarqubeReport')
+ {
+  sh "${mavenHome}/bin/mvn sonar:sonar"
+ }
+ stage('UploadArtifactsintoNexus')
+ {
+ sh "${mavenHome}/bin/mvn deploy"
+ }
+ stage('DeployApptoTomcatServer')
+ {
+
+ sshagent(['24d349b0-8d74-4756-8f55-e31b9c00abc0']) {
+ sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@13.127.23.219:/opt/apache-tomcat-9.0.45/webapps"
+ }
+}
+  stage('SendEmailNotification')
+  {
+      emailext body: '''Email Text Body
+
+   Regards,
+   ChanduDevOps,
+   7981380799.''', subject: 'Build over Scripted', to: 'chanduramu0915@gmail.com'
+  }
+    
+}
